@@ -204,18 +204,7 @@ RCT_EXPORT_METHOD(requestAuthorization)
   }
 
   // Request location access permission
-  if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationAlwaysUsageDescription"] &&
-    [_locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
-    [_locationManager requestAlwaysAuthorization];
-
-    // On iOS 9+ we also need to enable background updates
-    NSArray *backgroundModes  = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIBackgroundModes"];
-    if (backgroundModes && [backgroundModes containsObject:@"location"]) {
-      if ([_locationManager respondsToSelector:@selector(setAllowsBackgroundLocationUpdates:)]) {
-        [_locationManager setAllowsBackgroundLocationUpdates:YES];
-      }
-    }
-  } else if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationWhenInUseUsageDescription"] &&
+  if ([[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSLocationWhenInUseUsageDescription"] &&
     [_locationManager respondsToSelector:@selector(requestWhenInUseAuthorization)]) {
     [_locationManager requestWhenInUseAuthorization];
   }
@@ -315,6 +304,24 @@ RCT_EXPORT_METHOD(getCurrentPosition:(RCTLocationOptions)options
 }
 
 #pragma mark - CLLocationManagerDelegate
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    switch (status) {
+        case kCLAuthorizationStatusAuthorizedAlways: {
+            // On iOS 9+ we also need to enable background updates
+            NSArray *backgroundModes  = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UIBackgroundModes"];
+            if (backgroundModes && [backgroundModes containsObject:@"location"]) {
+              if ([_locationManager respondsToSelector:@selector(setAllowsBackgroundLocationUpdates:)]) {
+                [_locationManager setAllowsBackgroundLocationUpdates:YES];
+              }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
 
 - (void)locationManager:(CLLocationManager *)manager
      didUpdateLocations:(NSArray<CLLocation *> *)locations
